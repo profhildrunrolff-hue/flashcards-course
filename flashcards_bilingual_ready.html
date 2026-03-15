@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flashcards – Bilingual Ready</title>
+<style>
+:root {
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --ink:#1f2937;
+  --muted:#667085;
+  --accent:#295e8a;
+  --accent-2:#dce9f3;
+  --line:#e5e7eb;
+  --ok:#1f7a4f;
+  --warn:#8a5a00;
+  --shadow:0 10px 28px rgba(15,23,42,.08);
+  --radius:20px;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+.wrap {
+  max-width:960px; margin:0 auto; padding:18px;
+}
+.topbar {
+  display:grid; gap:12px; margin-bottom:14px;
+}
+.panel {
+  background:var(--card); border:1px solid var(--line); border-radius:18px;
+  box-shadow:var(--shadow); padding:14px;
+}
+.controls {
+  display:grid; gap:10px;
+  grid-template-columns: 1.2fr 1fr 1fr;
+}
+.controls .full { grid-column:1 / -1; }
+label {
+  display:block; font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:600;
+  letter-spacing:.02em; text-transform:uppercase;
+}
+input[type="search"], select {
+  width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:12px;
+  background:#fff; color:var(--ink); font-size:15px;
+}
+.seg {
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+.seg button, .actions button {
+  border:none; border-radius:12px; padding:10px 14px; font-size:15px; cursor:pointer;
+  background:var(--accent-2); color:var(--accent);
+}
+.seg button.active, .actions .primary {
+  background:var(--accent); color:#fff;
+}
+.hero {
+  display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap;
+}
+.hero h1 {
+  font-size:clamp(22px,4vw,32px); margin:0 0 4px;
+}
+.hero p { margin:0; color:var(--muted); }
+.stats {
+  display:flex; gap:10px; flex-wrap:wrap;
+}
+.badge {
+  background:#fff; border:1px solid var(--line); border-radius:999px; padding:8px 12px;
+  font-size:14px; color:var(--muted);
+}
+.flashcard {
+  background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow); padding:22px; min-height:360px; display:flex; flex-direction:column;
+}
+.meta {
+  display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;
+}
+.meta .tag {
+  font-size:12px; padding:6px 10px; border-radius:999px; background:#eef4f8; color:var(--accent);
+}
+.card-body {
+  flex:1; display:flex; flex-direction:column; justify-content:center; text-align:left; gap:18px;
+}
+.lang-block h2 {
+  margin:0 0 8px; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em;
+}
+.lang-block .text {
+  font-size:clamp(20px,3.8vw,30px); line-height:1.35; font-weight:650;
+}
+.answer .text {
+  font-size:clamp(18px,3.2vw,26px); font-weight:500;
+}
+.cn .text {
+  font-size:clamp(18px,3.2vw,26px); font-weight:500;
+}
+.placeholder {
+  color:var(--muted); font-style:italic; font-size:15px;
+}
+.footer {
+  margin-top:18px; display:grid; gap:10px;
+}
+.progressbar {
+  height:10px; background:#edf2f7; border-radius:999px; overflow:hidden;
+}
+.progressbar > div {
+  height:100%; width:0%; background:linear-gradient(90deg,var(--accent),#5f89af);
+}
+.actions {
+  display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; align-items:center;
+}
+.nav {
+  display:flex; gap:10px; flex-wrap:wrap;
+}
+.small {
+  font-size:13px; color:var(--muted);
+}
+.review {
+  display:flex; gap:10px; flex-wrap:wrap;
+}
+.review button.good { background:#e7f6ef; color:var(--ok); }
+.review button.again { background:#fff3df; color:var(--warn); }
+.empty {
+  padding:32px; text-align:center; color:var(--muted);
+}
+@media (max-width:700px) {
+  .controls { grid-template-columns:1fr; }
+  .flashcard { min-height:420px; padding:18px; }
+  .actions { align-items:stretch; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero panel">
+    <div>
+      <h1>Flashcards</h1>
+      <p>Bilingual-ready study deck for GitHub Pages, Funnelcockpit iframe, or Padlet link.</p>
+    </div>
+    <div class="stats">
+      <span class="badge" id="countBadge">0 cards</span>
+      <span class="badge" id="reviewBadge">0 marked for review</span>
+      <span class="badge" id="modeBadge">Study mode</span>
+    </div>
+  </div>
+
+  <div class="topbar panel">
+    <div class="controls">
+      <div>
+        <label for="search">Search</label>
+        <input id="search" type="search" placeholder="Search question, answer, author, keyword">
+      </div>
+      <div>
+        <label for="category">Category</label>
+        <select id="category"></select>
+      </div>
+      <div>
+        <label for="language">Display</label>
+        <select id="language">
+          <option value="en">English</option>
+          <option value="bi">Bilingual</option>
+          <option value="cn">Chinese only</option>
+        </select>
+      </div>
+      <div class="full">
+        <label>Mode</label>
+        <div class="seg">
+          <button id="studyBtn" class="active" type="button">Study</button>
+          <button id="quizBtn" type="button">Quiz</button>
+          <button id="shuffleBtn" type="button">Shuffle filtered cards</button>
+          <button id="resetBtn" type="button">Reset progress</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cardArea" class="flashcard">
+    <div class="meta">
+      <span class="tag" id="categoryTag">Category</span>
+      <span class="tag" id="notesTag">Notes</span>
+    </div>
+    <div class="card-body" id="cardBody"></div>
+    <div class="footer">
+      <div class="progressbar"><div id="progressFill"></div></div>
+      <div class="actions">
+        <div class="nav">
+          <button type="button" id="prevBtn">← Previous</button>
+          <button type="button" class="primary" id="flipBtn">Show answer</button>
+          <button type="button" id="nextBtn">Next →</button>
+        </div>
+        <div class="review">
+          <button type="button" class="good" id="knewBtn">I knew this</button>
+          <button type="button" class="again" id="reviewBtn">Review again</button>
+        </div>
+      </div>
+      <div class="small" id="progressText"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const rawCards = [{"id": 1, "category": "Barrett / Emotion Theory", "question_en": "According to Lisa Feldman Barrett's theory of constructed emotion, what are emotions?", "question_cn": "", "answer_en": "The brain's best guesses or predictions built from past experience, bodily state and cultural context.", "answer_cn": "", "notes": "Lisa Feldman Barrett"}, {"id": 2, "category": "Friston / Predictive Processing", "question_en": "In the context of the predictive brain, what is the primary function of the nervous system according to Karl Friston's Free Energy Principle?", "question_cn": "", "answer_en": "To minimise surprise by reducing the gap between predictions and actual encounters.", "answer_cn": "", "notes": "Karl Friston"}, {"id": 3, "category": "Damasio / Body–Mind", "question_en": "How does Antonio Damasio describe the relationship between the mind and the body?", "question_cn": "", "answer_en": "There is no separation; the self is a continuous process running through the entire body.", "answer_cn": "", "notes": "Antonio Damasio"}, {"id": 4, "category": "Damasio / Body–Mind", "question_en": "What is the distinction between 'background body feelings' and 'foreground emotions' in Damasio's research?", "question_cn": "", "answer_en": "Background feelings provide constant information about the body's state, while foreground emotions arise from specific situations.", "answer_cn": "", "notes": ""}, {"id": 5, "category": "Fuchs / Embodied Memory", "question_en": "How does Thomas Fuchs define the body's role in storing biographical experience?", "question_cn": "", "answer_en": "As a 'memorial organ' that stores history as a capacity to re-enact situations through movement and gesture.", "answer_cn": "", "notes": "Thomas Fuchs"}, {"id": 6, "category": "Fuchs / Embodied Memory", "question_en": "According to Thomas Fuchs bodily memory is not a passive archive but a _____.", "question_cn": "", "answer_en": "Living system that continuously shapes how we meet the world.", "answer_cn": "", "notes": "Thomas Fuchs"}, {"id": 7, "category": "Material Engagement", "question_en": "What is the central premise of Lambros Malafouris's Material Engagement Theory?", "question_cn": "", "answer_en": "Cognition is not restricted to the brain but extends into the making process when hands work with materials.", "answer_cn": "", "notes": "Lambros Malafouris"}, {"id": 8, "category": "BBAC Method", "question_en": "In the ABC learning structure of the BBAC programme, what does 'Part A' represent?", "question_cn": "", "answer_en": "The theoretical foundation, including developmental logic and safety anchors.", "answer_cn": "", "notes": ""}, {"id": 9, "category": "BBAC Method", "question_en": "In the ABC learning structure, what is the core objective of 'Part B'?", "question_cn": "", "answer_en": "Self-experience where the practitioner works with their own biographical material first.", "answer_cn": "", "notes": ""}, {"id": 10, "category": "BBAC Method", "question_en": "In the ABC learning structure, what does 'Part C' focus on?", "question_cn": "", "answer_en": "Transfer to professional practice, including formulating hypotheses and coaching questions.", "answer_cn": "", "notes": ""}, {"id": 11, "category": "BBAC Method", "question_en": "What is the 'Convergence Principle' in Biography-Based Art Coaching?", "question_cn": "", "answer_en": "The requirement that a biographical theme is only significant if identified across three independent diagnostic settings.", "answer_cn": "", "notes": ""}, {"id": 12, "category": "BBAC Method", "question_en": "List the four 'Safety Anchors' used in the BBAC methodology.", "question_cn": "", "answer_en": "Containment, Structure, Perspective and Symbols.", "answer_cn": "", "notes": ""}, {"id": 13, "category": "Developmental Phases", "question_en": "Which developmental age range corresponds to the Earth/Mineral phase (Phase 1)?", "question_cn": "", "answer_en": "Birth to approximately $3 \\frac{1}{2}$ years.", "answer_cn": "", "notes": ""}, {"id": 14, "category": "Developmental Phases", "question_en": "What is the primary psychological theme of the Earth/Mineral phase (Phase 1)?", "question_cn": "", "answer_en": "Containment, gravity and the capacity for stability or saying 'no'.", "answer_cn": "", "notes": ""}, {"id": 15, "category": "Developmental Phases", "question_en": "The Water/Plant phase (Phase 2) typically covers which age range?", "question_cn": "", "answer_en": "$3 \\frac{1}{2}$ to $7$ years.", "answer_cn": "", "notes": ""}, {"id": 16, "category": "Developmental Phases", "question_en": "What are the core cognitive and social abilities developed during the Water/Plant phase (Phase 2)?", "question_cn": "", "answer_en": "Imitation, gender awareness and the ability to build reliable sequences or structures.", "answer_cn": "", "notes": ""}, {"id": 17, "category": "Developmental Phases", "question_en": "The Air/Animal phase (Phase 3) occurs between which ages?", "question_cn": "", "answer_en": "$7$ to $10 \\frac{1}{2}$ years.", "answer_cn": "", "notes": ""}, {"id": 18, "category": "Developmental Phases", "question_en": "What is the 'Perspective' resource associated with the Air/Animal phase (Phase 3)?", "question_cn": "", "answer_en": "The ability to see beyond a situation and proceed logically or exploratively.", "answer_cn": "", "notes": ""}, {"id": 19, "category": "Developmental Phases", "question_en": "The Human/Fire phase (Phase 4) covers which developmental period?", "question_cn": "", "answer_en": "$10 \\frac{1}{2}$ to $14$ years.", "answer_cn": "", "notes": ""}, {"id": 20, "category": "Developmental Phases", "question_en": "What characterizes the 'differentiation' theme in the Human/Fire phase (Phase 4)?", "question_cn": "", "answer_en": "Boundary-crossing, individualised symbols and the energy to penetrate complex problems.", "answer_cn": "", "notes": ""}, {"id": 21, "category": "Integration / Regulation", "question_en": "According to Daniel Siegel, what is the 'window of tolerance'?", "question_cn": "", "answer_en": "The zone of optimal arousal where a person can engage, reflect and integrate experience.", "answer_cn": "", "notes": "Daniel Siegel"}, {"id": 22, "category": "Integration / Regulation", "question_en": "How does the BBAC approach redefine 'integration' based on Siegel's work?", "question_cn": "", "answer_en": "The linking of differentiated parts (implicit memory, narrative, somatic knowledge) into a coherent whole.", "answer_cn": "", "notes": ""}, {"id": 23, "category": "Friston / Predictive Processing", "question_en": "Why does the BBAC programme exclude Polyvagal Theory?", "question_cn": "", "answer_en": "Due to scientific critiques of its neurophysiological claims, opting for frameworks like sensory integration and predictive processing instead.", "answer_cn": "", "notes": ""}, {"id": 24, "category": "General", "question_en": "What does Jacques Derrida mean by the statement 'the hand thinks before it is thought'?", "question_cn": "", "answer_en": "The kinesthetic intelligence of the body has its own logic and memory independent of verbal thought.", "answer_cn": "", "notes": ""}, {"id": 25, "category": "General", "question_en": "According to Gerald Hüther, what is required for deep neurological change to occur?", "question_cn": "", "answer_en": "Meaningful experiences that carry emotional resonance.", "answer_cn": "", "notes": ""}, {"id": 26, "category": "BBAC Method", "question_en": "What is the 'Bridge Question' used for in coaching transfer?", "question_cn": "", "answer_en": "To transition the conversation from the observation of the artwork to the client's current professional or personal challenge.", "answer_cn": "", "notes": ""}, {"id": 27, "category": "BBAC Method", "question_en": "Identify the two steps involved in a 'Bridge Question'.", "question_cn": "", "answer_en": "1. Reflect on the diagnostic observation without interpretation. 2. Ask what that observation brings up regarding the coaching topic.", "answer_cn": "", "notes": ""}, {"id": 28, "category": "General", "question_en": "In Howard Gardner's research, how many distinct scribble types did he identify in early childhood development?", "question_cn": "", "answer_en": "20.", "answer_cn": "", "notes": ""}, {"id": 29, "category": "Theory / Concepts", "question_en": "According to Anil Seth consciousness and perception are a form of 'controlled _____' constructed by the brain's predictions.", "question_cn": "", "answer_en": "Hallucination.", "answer_cn": "", "notes": "Anil Seth"}, {"id": 30, "category": "General", "question_en": "What biological process begins around age three that consolidates frequently used neural connections?", "question_cn": "", "answer_en": "Synaptic pruning.", "answer_cn": "", "notes": ""}, {"id": 31, "category": "General", "question_en": "In the 'BioBild Study', what was the purpose of the three-image sequence (left, middle, right)?", "question_cn": "", "answer_en": "To explore biographical narratives by depicting the past (before), the present (the scene) and the future (after).", "answer_cn": "", "notes": ""}, {"id": 32, "category": "BBAC Method", "question_en": "What distinguishes Biography-Based Art Coaching from traditional art therapy?", "question_cn": "", "answer_en": "Coaching focuses on identifying and activating bound resources rather than treating pathology or trauma.", "answer_cn": "", "notes": ""}, {"id": 33, "category": "BBAC Method", "question_en": "How does the 'Image-Life Quadrant' map time on its horizontal axis?", "question_cn": "", "answer_en": "Past, Present and Future.", "answer_cn": "", "notes": ""}, {"id": 34, "category": "Damasio / Body–Mind", "question_en": "How does the 'Image-Life Quadrant' map levels of experience on its vertical axis?", "question_cn": "", "answer_en": "Mental (Thinking), Physical (Feeling) and Psychological (Action).", "answer_cn": "", "notes": ""}, {"id": 35, "category": "Developmental Phases", "question_en": "According to Hans-Günther Richter, what is 'Gesture Scribbling'?", "question_cn": "", "answer_en": "A phase around 18 months where motor movements begin to translate into a concept of movement.", "answer_cn": "", "notes": ""}, {"id": 36, "category": "General", "question_en": "What does Merleau-Ponty mean by stating consciousness is originally 'I can' rather than 'I think'?", "question_cn": "", "answer_en": "Knowledge is primarily embodied and implicit in the body schema's capacity for action.", "answer_cn": "", "notes": ""}, {"id": 37, "category": "Developmental Phases", "question_en": "In Phase 1 (Earth), what physical body systems are most associated with the theme of resistance?", "question_cn": "", "answer_en": "Bones and muscles.", "answer_cn": "", "notes": ""}, {"id": 38, "category": "Developmental Phases", "question_en": "In Phase 2 (Water), which bodily system is linked to the theme of flow and convention?", "question_cn": "", "answer_en": "The circulatory and lymphatic systems.", "answer_cn": "", "notes": ""}, {"id": 39, "category": "Developmental Phases", "question_en": "In Phase 3 (Air), which bodily function is linked to transformation and balance?", "question_cn": "", "answer_en": "Lungs and breathing ($CO_2$ exchange).", "answer_cn": "", "notes": ""}, {"id": 40, "category": "Developmental Phases", "question_en": "In Phase 4 (Fire), which bodily processes are associated with the theme of 'revolution' and boundary-crossing?", "question_cn": "", "answer_en": "Metabolism and digestion.", "answer_cn": "", "notes": ""}, {"id": 41, "category": "General", "question_en": "What is the significance of the 'Window' or 'Chimney' in the house drawing of the case study subject, Anna?", "question_cn": "", "answer_en": "They represented potential 'openings' or instabilities in her search for a secure 'body house' or home.", "answer_cn": "", "notes": ""}, {"id": 42, "category": "BBAC Method", "question_en": "Why is 'artistic competence' emphasized for the coach in this programme?", "question_cn": "", "answer_en": "To develop the embodied intelligence and perceptual skills needed to observe a client's creative process effectively.", "answer_cn": "", "notes": ""}, {"id": 43, "category": "Theory / Concepts", "question_en": "What are the four 'layers of being' meeting in humans according to Nicolai Hartmann?", "question_cn": "", "answer_en": "Inorganic, organic, psychic and spiritual.", "answer_cn": "", "notes": "Nicolai Hartmann"}, {"id": 44, "category": "Development / Sensory Integration", "question_en": "How does Jean Ayres describe the process of sensory integration?", "question_cn": "", "answer_en": "The nervous system's ability to organize sensory information from movement, touch and gravity for use.", "answer_cn": "", "notes": "Jean Ayres"}, {"id": 45, "category": "Development / Sensory Integration", "question_en": "According to Sally Goddard Blythe, what can 'retained primitive reflexes' indicate in an adult?", "question_cn": "", "answer_en": "Unintegrated early developmental patterns that influence emotional reactivity and learning.", "answer_cn": "", "notes": "Sally Goddard Blythe"}, {"id": 46, "category": "BBAC Method", "question_en": "In the BBAC context, why is the term 'hypothesis' preferred over 'diagnosis'?", "question_cn": "", "answer_en": "To keep the coach's observations open to the client's own reflection and avoid pathologising.", "answer_cn": "", "notes": ""}, {"id": 47, "category": "BBAC Method", "question_en": "What is the primary diagnostic exercise in Module 1 involving the arrangement of items?", "question_cn": "", "answer_en": "The Object Composition ($20 \\rightarrow 10 \\rightarrow 5$ objects).", "answer_cn": "", "notes": ""}, {"id": 48, "category": "General", "question_en": "Which diagnostic exercise in Module 1 is performed with eyes closed and both hands?", "question_cn": "", "answer_en": "The Scribble Exercise.", "answer_cn": "", "notes": ""}, {"id": 49, "category": "Developmental Phases", "question_en": "What is the diagnostic focus of the 'Birthday Drawing' exercise in Session 2?", "question_cn": "", "answer_en": "Head-to-body proportions as an indicator of developmental phase themes.", "answer_cn": "", "notes": ""}, {"id": 50, "category": "Developmental Phases", "question_en": "In the diagnostic sequence, how many sessions must a client complete before a phase signature is named as a hypothesis?", "question_cn": "", "answer_en": "Three.", "answer_cn": "", "notes": ""}, {"id": 51, "category": "Developmental Phases", "question_en": "What specific cultural concept in Chinese-Malaysian contexts might influence a Phase 1 (Containment) pattern?", "question_cn": "", "answer_en": "Filial Piety ($Xiao$) or community belonging rather than self-enclosure.", "answer_cn": "", "notes": ""}, {"id": 52, "category": "General", "question_en": "Why are art-based methods considered 'indirect' routes to the inner life in collectivist cultures?", "question_cn": "", "answer_en": "They allow a client to discuss an image rather than themselves, preserving 'face'.", "answer_cn": "", "notes": ""}, {"id": 53, "category": "General", "question_en": "According to Lise Eliot, how many new synaptic connections are formed per second during peak times around age two?", "question_cn": "", "answer_en": "1.8 million.", "answer_cn": "", "notes": ""}, {"id": 54, "category": "Theory / Concepts", "question_en": "Term: Biographicity", "question_cn": "", "answer_en": "Definition: The capacity of individuals to reread and reinterpret their own biographical resources in light of new experience.", "answer_cn": "", "notes": ""}, {"id": 55, "category": "Friston / Predictive Processing", "question_en": "Concept: Predictive Processing", "question_cn": "", "answer_en": "Definition: The theory that the brain is a prediction machine generating expectations about the world and updating them based on signals.", "answer_cn": "", "notes": ""}, {"id": 56, "category": "General", "question_en": "How does the 'scarecrow' figure in Anna's drawing represent a biographical resource?", "question_cn": "", "answer_en": "As a 'helpful being' that eventually transforms, reflecting her longing for a stable partnership.", "answer_cn": "", "notes": ""}, {"id": 57, "category": "Developmental Phases", "question_en": "In Phase 2 (Water), what is the 'psyche' level of interaction with the natural realm?", "question_cn": "", "answer_en": "Playing with flow, movement and practice.", "answer_cn": "", "notes": ""}, {"id": 58, "category": "Developmental Phases", "question_en": "In Phase 1 (Earth), what is the 'individuality' skill associated with cognition?", "question_cn": "", "answer_en": "The ability to form syntheses and the ability to say 'no'.", "answer_cn": "", "notes": ""}, {"id": 59, "category": "BBAC Method", "question_en": "The 'Structure' theme in coaching is most often a resource for clients who have difficulty with _____.", "question_cn": "", "answer_en": "Ambiguity or lack of clear procedures.", "answer_cn": "", "notes": ""}, {"id": 60, "category": "Developmental Phases", "question_en": "How should a coach reframe a 'Fire' phase client's tendency to do everything to a high standard?", "question_cn": "", "answer_en": "As the rare energy to fully penetrate a problem, focusing the coaching on prioritisation.", "answer_cn": "", "notes": ""}, {"id": 61, "category": "BBAC Method", "question_en": "In the BBAC programme the phrase 'Nature becomes Play becomes _____' describes the developmental arc of resources.", "question_cn": "", "answer_en": "Competence.", "answer_cn": "", "notes": ""}, {"id": 62, "category": "General", "question_en": "What is the 'mode of can' as described by Werner Loch?", "question_cn": "", "answer_en": "Self-knowledge that is essentially a practice of what the body is capable of doing, rather than intellectual knowledge.", "answer_cn": "", "notes": "Werner Loch"}, {"id": 63, "category": "Fuchs / Embodied Memory", "question_en": "According to Thomas Fuchs the brain does not come into the world finished, but forms its fine structure through _____.", "question_cn": "", "answer_en": "Interaction with the individual's environment (epigenesis).", "answer_cn": "", "notes": "Thomas Fuchs"}, {"id": 64, "category": "General", "question_en": "What does 'synaptic pruning' favour in the developing brain?", "question_cn": "", "answer_en": "Neural connections that are frequently used and associated with experienced emotions.", "answer_cn": "", "notes": ""}, {"id": 65, "category": "Developmental Phases", "question_en": "In the Earth/Mineral phase, what is the 'Children's Drawing' characteristic at the end of the phase?", "question_cn": "", "answer_en": "The circular line or imperfect circle.", "answer_cn": "", "notes": ""}, {"id": 66, "category": "Developmental Phases", "question_en": "In the Water/Plant phase, what is the characteristic 'Children's Drawing' style?", "question_cn": "", "answer_en": "Organic shapes or early pre-schematic representations showing movement.", "answer_cn": "", "notes": ""}, {"id": 67, "category": "Developmental Phases", "question_en": "In the Air/Animal phase, what is a typical feature of 'Children's Drawing'?", "question_cn": "", "answer_en": "Figures showing balance, action in space or animals.", "answer_cn": "", "notes": ""}, {"id": 68, "category": "Developmental Phases", "question_en": "In the Fire/Human phase, what defines the 'Children's Drawing' stage?", "question_cn": "", "answer_en": "Highly individualised symbols and complex, often heart-shaped or internalised imagery.", "answer_cn": "", "notes": ""}, {"id": 69, "category": "BBAC Method", "question_en": "What is the role of the coach in art-based work regarding client images?", "question_cn": "", "answer_en": "To facilitate the client's own observation and reflection rather than providing interpretation or diagnosis.", "answer_cn": "", "notes": ""}, {"id": 70, "category": "BBAC Method", "question_en": "What does the 'Object Composition' exercise reveal about a client's biographical signature?", "question_cn": "", "answer_en": "Habitual ways of organizing space, selecting priorities and dealing with reduction (from 20 to 5).", "answer_cn": "", "notes": ""}, {"id": 71, "category": "General", "question_en": "How does 'epigenetic' brain development relate to the biography?", "question_cn": "", "answer_en": "It means the brain's structure is complementary to the learning history and environment of the organism.", "answer_cn": "", "notes": ""}, {"id": 72, "category": "Developmental Phases", "question_en": "According to Rhoda Kellogg children's scribbles are not chaos but _____ structures found across all cultures.", "question_cn": "", "answer_en": "Organised graphic.", "answer_cn": "", "notes": "Rhoda Kellogg"}, {"id": 73, "category": "General", "question_en": "In the context of the 'Body House', why must the barriers of the system be semi-permeable?", "question_cn": "", "answer_en": "To maintain internal conditions different from the surroundings while allowing necessary intake of matter/energy.", "answer_cn": "", "notes": ""}, {"id": 74, "category": "BBAC Method", "question_en": "What is the primary difference between how a coach and a therapist use the 'Image-Life Quadrant'?", "question_cn": "", "answer_en": "A coach uses it to explore current objectives and resources, while a therapist may use it to investigate pathology or trauma.", "answer_cn": "", "notes": ""}, {"id": 75, "category": "Developmental Phases", "question_en": "How does the 'Scribble Table' by Hans-Günther Richter group the four phases of early drawing development?", "question_cn": "", "answer_en": "In correlation with Piaget's cognitive research findings.", "answer_cn": "", "notes": ""}, {"id": 76, "category": "Developmental Phases", "question_en": "What is 'Conceptual Scribbling'?", "question_cn": "", "answer_en": "The fourth phase of mark-making (age 3 to 4) marking the boundary to pre-schematic representation.", "answer_cn": "", "notes": ""}, {"id": 77, "category": "Development / Sensory Integration", "question_en": "According to Sally Goddard Blythe infant movement repertoire can be viewed as _____ phases (reptilian, mammalian, primate, human).", "question_cn": "", "answer_en": "Evolutionary.", "answer_cn": "", "notes": "Sally Goddard Blythe"}, {"id": 78, "category": "Developmental Phases", "question_en": "In Phase 3 (Air) the resource 'I can see beyond a situation' is particularly useful for clients struggling with _____.", "question_cn": "", "answer_en": "Emotional over-involvement or lack of objectivity.", "answer_cn": "", "notes": ""}, {"id": 79, "category": "BBAC Method", "question_en": "What is the 'Bridge' in the Bridge Question?", "question_cn": "", "answer_en": "The cognitive link between the aesthetic experience of the art and the professional reality of the coaching goal.", "answer_cn": "", "notes": ""}, {"id": 80, "category": "Developmental Phases", "question_en": "In collectivist cultures, why might a Phase 1 (Containment) resource be framed as 'community belonging'?", "question_cn": "", "answer_en": "Because self-enclosure may be a strategy to maintain group harmony or protect shared 'face'.", "answer_cn": "", "notes": ""}, {"id": 81, "category": "General", "question_en": "Which researcher documented his nearly 2-year-old son Jerry's marks to describe the drawing development process?", "question_cn": "", "answer_en": "Howard Gardner.", "answer_cn": "", "notes": ""}, {"id": 82, "category": "Developmental Phases", "question_en": "The ability to say 'no' in Phase 1 (Earth) is a precursor to the cognitive skill of _____.", "question_cn": "", "answer_en": "Synthesis or differentiation of self from other.", "answer_cn": "", "notes": ""}, {"id": 83, "category": "General", "question_en": "Why is 'Movement' a central focus in biography-based art therapeutic processes?", "question_cn": "", "answer_en": "Because developmental movement patterns from childhood are translated into everyday actions and image-creation choreographies.", "answer_cn": "", "notes": ""}, {"id": 84, "category": "General", "question_en": "In the case study of Anna, how did the death of her father at age 3 show up in her 'Future' image?", "question_cn": "", "answer_en": "As a transparent, unoccupied house, reflecting a 'home' that remains an unshaped idea rather than a tangible reality.", "answer_cn": "", "notes": ""}, {"id": 85, "category": "BBAC Method", "question_en": "What is the primary learning principle for practitioners in the BBAC programme regarding their own biography?", "question_cn": "", "answer_en": "'What you have not traversed yourself, you cannot accompany another through.'", "answer_cn": "", "notes": ""}];
+const storeKey = "bbac_flashcards_state_v1";
+const state = {
+  filtered: [],
+  index: 0,
+  flipped: false,
+  mode: "study",
+  language: "bi",
+  reviewIds: new Set(),
+  masteredIds: new Set()
+};
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storeKey) || "{}");
+    if (saved.language) state.language = saved.language;
+    if (saved.mode) state.mode = saved.mode;
+    if (Array.isArray(saved.reviewIds)) state.reviewIds = new Set(saved.reviewIds);
+    if (Array.isArray(saved.masteredIds)) state.masteredIds = new Set(saved.masteredIds);
+  } catch (e) {}
+}
+
+function saveState() {
+  localStorage.setItem(storeKey, JSON.stringify({
+    language: state.language,
+    mode: state.mode,
+    reviewIds: [...state.reviewIds],
+    masteredIds: [...state.masteredIds]
+  }));
+}
+
+function uniqueCategories() {
+  return ["All categories", ...new Set(rawCards.map(c => c.category).filter(Boolean))];
+}
+
+function populateCategories() {
+  const sel = document.getElementById("category");
+  sel.innerHTML = uniqueCategories().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+}
+
+function escapeHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, s => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[s]));
+}
+
+function applyFilters() {
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  const cat = document.getElementById("category").value;
+  let cards = rawCards.filter(card => {
+    const matchesCat = cat === "All categories" || card.category === cat;
+    const hay = [card.question_en, card.answer_en, card.question_cn, card.answer_cn, card.notes, card.category].join(" ").toLowerCase();
+    const matchesQ = !q || hay.includes(q);
+    return matchesCat && matchesQ;
+  });
+  state.filtered = cards;
+  if (state.index >= cards.length) state.index = 0;
+  render();
+}
+
+function currentCard() {
+  return state.filtered[state.index] || null;
+}
+
+function langBlock(title, text, cls="") {
+  if (!text) return `<div class="lang-block ${cls}"><div class="placeholder">Chinese text not added yet in source workbook.</div></div>`;
+  return `<div class="lang-block ${cls}"><h2>${escapeHtml(title)}</h2><div class="text">${escapeHtml(text)}</div></div>`;
+}
+
+function renderCardFront(card) {
+  const mode = state.language;
+  let html = "";
+  if (mode === "en") {
+    html += langBlock("Question", card.question_en);
+  } else if (mode === "cn") {
+    html += langBlock("问题", card.question_cn, "cn");
+  } else {
+    html += langBlock("Question", card.question_en);
+    html += langBlock("问题", card.question_cn, "cn");
+  }
+  return html;
+}
+
+function renderCardBack(card) {
+  const mode = state.language;
+  let html = "";
+  if (mode === "en") {
+    html += `<div class="answer">${langBlock("Answer", card.answer_en)}</div>`;
+  } else if (mode === "cn") {
+    html += `<div class="answer cn">${langBlock("答案", card.answer_cn, "cn")}</div>`;
+  } else {
+    html += `<div class="answer">${langBlock("Answer", card.answer_en)}</div>`;
+    html += `<div class="answer cn">${langBlock("答案", card.answer_cn, "cn")}</div>`;
+  }
+  return html;
+}
+
+function render() {
+  document.getElementById("language").value = state.language;
+  document.getElementById("studyBtn").classList.toggle("active", state.mode === "study");
+  document.getElementById("quizBtn").classList.toggle("active", state.mode === "quiz");
+  document.getElementById("modeBadge").textContent = state.mode === "quiz" ? "Quiz mode" : "Study mode";
+  document.getElementById("countBadge").textContent = `${state.filtered.length} cards`;
+  document.getElementById("reviewBadge").textContent = `${state.reviewIds.size} marked for review`;
+
+  const area = document.getElementById("cardBody");
+  const card = currentCard();
+  if (!card) {
+    area.innerHTML = '<div class="empty">No cards match the current filter.</div>';
+    document.getElementById("categoryTag").textContent = "—";
+    document.getElementById("notesTag").textContent = "—";
+    document.getElementById("progressText").textContent = "";
+    document.getElementById("progressFill").style.width = "0%";
+    return;
+  }
+
+  document.getElementById("categoryTag").textContent = card.category || "General";
+  document.getElementById("notesTag").textContent = card.notes || "No notes";
+  area.innerHTML = state.flipped ? renderCardBack(card) : renderCardFront(card);
+
+  const pct = ((state.index + 1) / Math.max(state.filtered.length, 1)) * 100;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressText").textContent =
+    `Card ${state.index + 1} of ${state.filtered.length} · Mastered: ${state.masteredIds.size} · Review: ${state.reviewIds.size}`;
+  document.getElementById("flipBtn").textContent = state.flipped ? "Show question" : "Show answer";
+}
+
+function nextCard() {
+  if (!state.filtered.length) return;
+  state.index = (state.index + 1) % state.filtered.length;
+  state.flipped = false;
+  render();
+}
+function prevCard() {
+  if (!state.filtered.length) return;
+  state.index = (state.index - 1 + state.filtered.length) % state.filtered.length;
+  state.flipped = false;
+  render();
+}
+function flipCard() {
+  if (!state.filtered.length) return;
+  if (state.mode === "quiz" && !state.flipped) {
+    state.flipped = true;
+  } else {
+    state.flipped = !state.flipped;
+  }
+  render();
+}
+function shuffleCards() {
+  for (let i = state.filtered.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [state.filtered[i], state.filtered[j]] = [state.filtered[j], state.filtered[i]];
+  }
+  state.index = 0;
+  state.flipped = false;
+  render();
+}
+function markKnown() {
+  const card = currentCard();
+  if (!card) return;
+  state.masteredIds.add(card.id);
+  state.reviewIds.delete(card.id);
+  saveState();
+  nextCard();
+}
+function markReview() {
+  const card = currentCard();
+  if (!card) return;
+  state.reviewIds.add(card.id);
+  state.masteredIds.delete(card.id);
+  saveState();
+  nextCard();
+}
+function resetProgress() {
+  state.reviewIds.clear();
+  state.masteredIds.clear();
+  state.index = 0;
+  state.flipped = false;
+  saveState();
+  render();
+}
+
+document.getElementById("search").addEventListener("input", applyFilters);
+document.getElementById("category").addEventListener("change", applyFilters);
+document.getElementById("language").addEventListener("change", e => {
+  state.language = e.target.value;
+  saveState();
+  render();
+});
+document.getElementById("studyBtn").addEventListener("click", () => {
+  state.mode = "study"; state.flipped = false; saveState(); render();
+});
+document.getElementById("quizBtn").addEventListener("click", () => {
+  state.mode = "quiz"; state.flipped = false; saveState(); render();
+});
+document.getElementById("shuffleBtn").addEventListener("click", shuffleCards);
+document.getElementById("resetBtn").addEventListener("click", resetProgress);
+document.getElementById("prevBtn").addEventListener("click", prevCard);
+document.getElementById("nextBtn").addEventListener("click", nextCard);
+document.getElementById("flipBtn").addEventListener("click", flipCard);
+document.getElementById("knewBtn").addEventListener("click", markKnown);
+document.getElementById("reviewBtn").addEventListener("click", markReview);
+document.getElementById("cardArea").addEventListener("click", (e) => {
+  if (e.target.closest("button, input, select")) return;
+  flipCard();
+});
+
+// touch swipe
+let startX = null;
+document.getElementById("cardArea").addEventListener("touchstart", e => {
+  startX = e.changedTouches[0].clientX;
+}, {passive:true});
+document.getElementById("cardArea").addEventListener("touchend", e => {
+  if (startX === null) return;
+  const dx = e.changedTouches[0].clientX - startX;
+  if (Math.abs(dx) > 70) {
+    dx < 0 ? nextCard() : prevCard();
+  }
+  startX = null;
+}, {passive:true});
+
+loadState();
+populateCategories();
+document.getElementById("language").value = state.language;
+applyFilters();
+</script>
+</body>
+</html>
